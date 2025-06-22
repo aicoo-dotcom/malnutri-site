@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Malnutrition Detection</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+</head>
+<body>
+  <h2>Upload Gambar Wajah</h2>
+  <input type="file" id="imgInput">
+  <button onclick="predict()">Prediksi</button>
+  <p id="result"></p>
+
+  <script>
+    let model;
+    async function loadModel() {
+      model = await tf.loadLayersModel('./tfjs_model/model.json');
+    }
+
+    async function predict() {
+      const file = document.getElementById("imgInput").files[0];
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = async () => {
+        const tensor = tf.browser.fromPixels(img)
+          .resizeNearestNeighbor([224, 224])
+          .toFloat()
+          .div(255)
+          .expandDims();
+
+        const pred = await model.predict(tensor).data();
+        const labels = ["Undernutrition", "normal", "overnutrition"];
+        const result = labels[pred.indexOf(Math.max(...pred))];
+        document.getElementById("result").innerText = "Hasil: " + result;
+      };
+    }
+
+    loadModel();
+  </script>
+</body>
+</html>
